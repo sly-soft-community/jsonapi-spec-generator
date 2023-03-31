@@ -5,6 +5,7 @@ namespace LaravelJsonApi\OpenApiSpec;
 use LaravelJsonApi\Contracts\Schema\Schema;
 use LaravelJsonApi\Contracts\Server\Server;
 use LaravelJsonApi\Core\Resources\JsonApiResource;
+use LaravelJsonApi\Eloquent\Contracts\Proxy;
 
 class ResourceContainer
 {
@@ -80,6 +81,15 @@ class ResourceContainer
         if (method_exists($model, 'all')) {
             $resources = $model::all()->map(function ($model) {
                 return $this->server->resources()->create($model);
+            })->take(3);
+
+            $this->resources[$model] = $resources;
+        }
+
+        if (is_subclass_of($model, Proxy::class)) {
+            $proxyModel = new $model();
+            $resources = $proxyModel->all()->map(function ($proxyModel) use ($model) {
+                return $this->server->resources()->create($model::wrap($proxyModel));
             })->take(3);
 
             $this->resources[$model] = $resources;
